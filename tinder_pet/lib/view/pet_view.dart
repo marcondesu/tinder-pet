@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tinder_pet/controller/pet_controller.dart';
+import 'package:tinder_pet/view/pet_detail_view.dart';
 
 class PetsView extends StatefulWidget {
   const PetsView({super.key});
@@ -180,40 +181,55 @@ class PetGrid extends StatelessWidget {
           name: pet['nome'] ?? '',
           age: pet['idade']?.toString() ?? '',
           address: pet['endereco'] ?? 'Endereço desconhecido',
+          pet: pet,  // Passa o objeto completo para a página de detalhes
         );
       },
     );
   }
 }
 
+
+// Cartão que exibe as informações de um pet
 // Cartão que exibe as informações de um pet
 class PetCard extends StatelessWidget {
   final String name;
   final String age;
   final String address;
+  final Map<String, dynamic> pet;
 
   const PetCard({
     super.key,
     required this.name,
     required this.age,
     required this.address,
+    required this.pet,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 10),
-          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text('$age anos'),
-          Text(address),
-        ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PetDetailView(pet: pet),  // Redireciona para a página de detalhes
+          ),
+        );
+      },
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 10),
+            Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('$age anos'),
+            Text(address),
+          ],
+        ),
       ),
     );
   }
