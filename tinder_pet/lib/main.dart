@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:tinder_pet/controller/pet_controller.dart';
+import 'package:tinder_pet/view/add_pet_view.dart';
 import 'package:tinder_pet/view/home_view.dart';
 import 'package:tinder_pet/view/login_view.dart';
 import 'package:tinder_pet/view/pet_view.dart';
 import 'package:tinder_pet/view/register_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+  final PetController petController = PetController();
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +25,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginView(),
         '/register': (context) => const SignupView(),
         '/pets': (context) => const PetsView(),
+        '/add-pet': (context) => AddPetView(controller: petController),
       },
     );
   }

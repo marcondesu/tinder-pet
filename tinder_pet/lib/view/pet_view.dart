@@ -40,6 +40,16 @@ class _PetsViewState extends State<PetsView> {
       appBar: AppBar(
         title: const Text('Tinder Pet'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon:
+                const Icon(Icons.add), // Ícone de adição para cadastrar um pet
+            onPressed: () {
+              // Navegar para a tela de cadastro de pet
+              Navigator.pushNamed(context, '/add-pet');
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
