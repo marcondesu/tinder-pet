@@ -1,173 +1,158 @@
 import 'package:flutter/material.dart';
-import '../controller/pet_controller.dart';
-import '../model/pet_model.dart';
 
-class PetView extends StatefulWidget {
+class PetsView extends StatelessWidget {
+  const PetsView({super.key});
+
   @override
-  _PetViewState createState() => _PetViewState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Pet Adoption',
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+      ),
+      home: const PetAdoptionHomePage(),
+    );
+  }
 }
 
-class _PetViewState extends State<PetView> {
-  final PetController _controller = PetController();
-
-  final TextEditingController _nomeController = TextEditingController();
-  final TextEditingController _idadeController = TextEditingController();
-  final TextEditingController _sexoController = TextEditingController();
-
-  Especie _especie = Especie.cachorro;
-  Porte _porte = Porte.medio;
-  Temperamento _temperamento = Temperamento.brincalhao;
-  bool _vacinado = false;
-  bool _castrado = false;
-  bool _sociavel = false;
-  Sexo sexo = Sexo.femea;
-
-  void _addPet() {
-    final nome = _nomeController.text;
-    final idade = int.tryParse(_idadeController.text) ?? 0;
-
-    final pet = Pet(
-      nome: nome,
-      idade: idade,
-      sexo: sexo,
-      especie: _especie,
-      porte: _porte,
-      temperamento: _temperamento,
-      vacinado: _vacinado,
-      castrado: _castrado,
-      sociavel: _sociavel,
-    );
-
-    _controller.addPet(pet);
-    _nomeController.clear();
-    _idadeController.clear();
-    _sexoController.clear();
-    setState(() {});
-  }
+class PetAdoptionHomePage extends StatelessWidget {
+  const PetAdoptionHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cadastro de Pets'),
+        title: const Text('PET ADOPTION'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: Padding(  
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nomeController,
-              decoration: InputDecoration(labelText: 'Nome'),
-            ),
-            TextField(
-              controller: _idadeController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: 'Idade'),
-            ),
-            DropdownButton<Sexo>(
-              value: sexo,
-              onChanged: (Sexo? newValue) {
-                setState(() {
-                  sexo = newValue!;
-                });
-              },
-              items: Sexo.values.map<DropdownMenuItem<Sexo>>((Sexo value) {
-                return DropdownMenuItem<Sexo>(
-                  value: value,
-                  child: Text(value.toString().split('.').last),
-                );
-              }).toList(),
-              hint: Text('Escolha a espécie'),
-            ),
-            DropdownButton<Especie>(
-              value: _especie,
-              onChanged: (Especie? newValue) {
-                setState(() {
-                  _especie = newValue!;
-                });
-              },
-              items: Especie.values.map<DropdownMenuItem<Especie>>((Especie value) {
-                return DropdownMenuItem<Especie>(
-                  value: value,
-                  child: Text(value.toString().split('.').last),
-                );
-              }).toList(),
-              hint: Text('Escolha a espécie'),
-            ),
-            DropdownButton<Porte>(
-              value: _porte,
-              onChanged: (Porte? newValue) {
-                setState(() {
-                  _porte = newValue!;
-                });
-              },
-              items: Porte.values.map<DropdownMenuItem<Porte>>((Porte value) {
-                return DropdownMenuItem<Porte>(
-                  value: value,
-                  child: Text(value.toString().split('.').last),
-                );
-              }).toList(),
-              hint: Text('Escolha o porte'),
-            ),
-            DropdownButton<Temperamento>(
-              value: _temperamento,
-              onChanged: (Temperamento? newValue) {
-                setState(() {
-                  _temperamento = newValue!;
-                });
-              },
-              items: Temperamento.values.map<DropdownMenuItem<Temperamento>>((Temperamento value) {
-                return DropdownMenuItem<Temperamento>(
-                  value: value,
-                  child: Text(value.toString().split('.').last),
-                );
-              }).toList(),
-              hint: Text('Escolha o temperamento'),
-            ),
-            CheckboxListTile(
-              title: Text('Vacinado'),
-              value: _vacinado,
-              onChanged: (bool? newValue) {
-                setState(() {
-                  _vacinado = newValue!;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text('Castrado'),
-              value: _castrado,
-              onChanged: (bool? newValue) {
-                setState(() {
-                  _castrado = newValue!;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text('Sociável'),
-              value: _sociavel,
-              onChanged: (bool? newValue) {
-                setState(() {
-                  _sociavel = newValue!;
-                });
-              },
-            ),
-            ElevatedButton(
-              onPressed: _addPet,
-              child: Text('Adicionar Pet'),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _controller.getPets().length,
-                itemBuilder: (context, index) {
-                  final pet = _controller.getPets()[index];
-                  return ListTile(
-                    title: Text(pet.descricao),
-                  );
-                },
-              ),
-            ),
-          ],
+        children: const [
+          SearchBar(),
+          SizedBox(height: 20),
+          CategorySection(),
+          SizedBox(height: 20),
+          PetGrid(),
+        ],
+      ),
+    );
+  }
+}
+
+class SearchBar extends StatelessWidget {
+  const SearchBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      decoration: InputDecoration(
+        hintText: 'Search for pets',
+        prefixIcon: const Icon(Icons.search),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
         ),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+    );
+  }
+}
+
+class CategorySection extends StatelessWidget {
+  const CategorySection({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        CategoryItem(label: 'Cat', icon: Icons.pets),
+        CategoryItem(label: 'Dog', icon: Icons.pets),
+        CategoryItem(label: 'Rabbit', icon: Icons.pets),
+      ],
+    );
+  }
+}
+
+class CategoryItem extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const CategoryItem({
+    super.key,
+    required this.label,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 30,
+          child: Icon(icon, size: 30),
+        ),
+        const SizedBox(height: 8),
+        Text(label),
+      ],
+    );
+  }
+}
+
+class PetGrid extends StatelessWidget {
+  const PetGrid({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      children: const [
+        PetCard(name: 'Olivia', age: '2 years', imageUrl: 'assets/cat.png'),
+        PetCard(name: 'Pedro', age: '3 years', imageUrl: 'assets/dog.png'),
+        PetCard(name: 'Fluffy', age: '1 year', imageUrl: 'assets/rabbit.png'),
+        PetCard(name: 'Max', age: '4 years', imageUrl: 'assets/dog.png'),
+      ],
+    );
+  }
+}
+
+class PetCard extends StatelessWidget {
+  final String name;
+  final String age;
+  final String imageUrl;
+
+  const PetCard({
+    super.key,
+    required this.name,
+    required this.age,
+    required this.imageUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(imageUrl, height: 80),
+          const SizedBox(height: 10),
+          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(age),
+        ],
       ),
     );
   }

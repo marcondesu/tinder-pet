@@ -2,6 +2,7 @@ enum TamanhoCasa { pequena, media, grande }
 enum TipoMoradia { casa, condominio }
 
 class Usuario {
+  String id;
   String nome;
   DateTime dataNascimento;
   String endereco;
@@ -14,6 +15,7 @@ class Usuario {
 
   Usuario({
     // comum a ong
+    required this.id,
     required this.nome,
     required this.email,
     required this.senha,
