@@ -5,7 +5,8 @@ import 'package:tinder_pet/view/home_view.dart';
 import 'package:tinder_pet/view/login_view.dart';
 import 'package:tinder_pet/view/pet_view.dart';
 import 'package:tinder_pet/view/register_view.dart';
-
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(MyApp());
