@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tinder_pet/controller/pet_controller.dart';
+import 'package:tinder_pet/view/map_view.dart';
 import 'package:tinder_pet/view/pet_detail_view.dart';
 
 class PetsView extends StatefulWidget {
@@ -17,20 +18,20 @@ class _PetsViewState extends State<PetsView> {
   @override
   void initState() {
     super.initState();
-    _loadPets();  // Carrega os pets quando a tela inicia
+    _loadPets(); // Carrega os pets quando a tela inicia
   }
 
   Future<void> _loadPets() async {
     await controller.loadPetsFromFile();
     setState(() {
-      pets = controller.fetchPets();  // Carrega a lista de pets
-      filteredPets = pets;            // Inicializa a lista de pets filtrados
+      pets = controller.fetchPets(); // Carrega a lista de pets
+      filteredPets = pets; // Inicializa a lista de pets filtrados
     });
   }
 
   void _onSearchChanged(String query) {
     setState(() {
-      filteredPets = controller.searchPets(query);  // Atualiza a busca
+      filteredPets = controller.searchPets(query); // Atualiza a busca
     });
   }
 
@@ -55,13 +56,15 @@ class _PetsViewState extends State<PetsView> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: ListView(
           children: [
-            SearchBar(onSearchChanged: _onSearchChanged),  // Campo de busca
+            SearchBar(onSearchChanged: _onSearchChanged), // Campo de busca
             const SizedBox(height: 20),
-            const FindPetSection(),  // Seção "Encontre um pet"
+            const FindPetSection(), // Seção "Encontre um pet"
             const SizedBox(height: 20),
-            CategorySection(categories: controller.speciesCategories),  // Seção de categorias de espécies
+            CategorySection(
+                categories: controller
+                    .speciesCategories), // Seção de categorias de espécies
             const SizedBox(height: 20),
-            PetGrid(pets: filteredPets),  // Grade de pets filtrados
+            PetGrid(pets: filteredPets), // Grade de pets filtrados
           ],
         ),
       ),
@@ -115,7 +118,13 @@ class FindPetSection extends StatelessWidget {
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              // Ação do botão
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const MapView(), // Navegar para a tela do mapa
+                ),
+              );
             },
             child: const Text('Procurar agora'),
           ),
@@ -191,13 +200,12 @@ class PetGrid extends StatelessWidget {
           name: pet['nome'] ?? '',
           age: pet['idade']?.toString() ?? '',
           address: pet['endereco'] ?? 'Endereço desconhecido',
-          pet: pet,  // Passa o objeto completo para a página de detalhes
+          pet: pet, // Passa o objeto completo para a página de detalhes
         );
       },
     );
   }
 }
-
 
 // Cartão que exibe as informações de um pet
 // Cartão que exibe as informações de um pet
@@ -222,7 +230,8 @@ class PetCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PetDetailView(pet: pet),  // Redireciona para a página de detalhes
+            builder: (context) => PetDetailView(
+                pet: pet), // Redireciona para a página de detalhes
           ),
         );
       },

@@ -12,7 +12,7 @@ class SignupController {
 
   Future<void> _saveUsers(List<dynamic> users) async {
     final String jsonString = jsonEncode(users);
-    final file = File('assets/users.json');
+    final file = File('data/usuarios.json');
     await file.writeAsString(jsonString); // Atualiza o arquivo com os novos dados
   }
 
