@@ -1,0 +1,21 @@
+[
+    {
+      "razaoSocial": "Amigos dos Animais",
+      "endereco": "Av. Central, 123",
+      "email": "contato@amigosdosanimais.org",
+      "senha": "ong123"
+    },  
+    {
+      "razaoSocial": "Proteção Animal",
+      "endereco": "Rua das Flores, 456",
+      "email": "contato@protecaoanimal.org",
+      "senha": "ong456"
+    },
+    {
+      "razaoSocial": "Salve um Amigo",
+      "endereco": "Rua Verde, 789",
+      "email": "contato@salveumamigo.org",
+      "senha": "ong789"
+    }
+  ]
+  

@@ -1,23 +1,36 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 
 class PetController {
-  // Função para buscar a lista de pets
-  List<Map<String, String>> fetchPets() {
-    // Simulando a obtenção de pets (normalmente isso viria de uma API ou banco de dados)
-    return [
-      {'name': 'Olivia', 'age': '2 years', 'imageUrl': 'assets/cat.png'},
-      {'name': 'Pedro', 'age': '3 years', 'imageUrl': 'assets/dog.png'},
-      {'name': 'Fluffy', 'age': '1 year', 'imageUrl': 'rabbit.jpeg'},
-      {'name': 'Max', 'age': '4 years', 'imageUrl': 'assets/dog.png'},
-      {'name': 'Max', 'age': '4 years', 'imageUrl': 'assets/dog.png'},
-      {'name': 'Max', 'age': '4 years', 'imageUrl': 'assets/dog.png'},
-    ];
+  List<Map<String, dynamic>> pets = [];
+  Set<String> speciesCategories = {};
+
+  // Carrega os dados do arquivo JSON e extrai as categorias (espécies)
+  Future<void> loadPetsFromFile() async {
+    try {
+      String jsonString = await rootBundle.loadString('data/pets.json');
+      List<dynamic> jsonResponse = jsonDecode(jsonString);
+      pets = jsonResponse.cast<Map<String, dynamic>>();
+
+      // Extrai as categorias únicas de espécies
+      speciesCategories = pets.map((pet) => pet['especie'] as String).toSet();
+      print('Categorias encontradas: $speciesCategories');
+    } catch (e) {
+      print("Erro ao carregar pets: $e");
+    }
   }
 
-  // Função de busca para filtrar pets
-  List<Map<String, String>> searchPets(String query, List<Map<String, String>> pets) {
-    return pets
-        .where((pet) => pet['name']!.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  // Retorna a lista de pets carregados
+  List<Map<String, dynamic>> fetchPets() {
+    return pets;
+  }
+
+  // Filtra os pets com base na busca por nome
+  List<Map<String, dynamic>> searchPets(String query) {
+    return pets.where((pet) {
+      final nameLower = pet['nome'].toLowerCase();
+      final queryLower = query.toLowerCase();
+      return nameLower.contains(queryLower);
+    }).toList();
   }
 }

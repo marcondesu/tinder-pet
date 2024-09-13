@@ -1,0 +1,55 @@
+[
+    {
+      "id": 1,
+      "nome": "Raul",
+      "idade": 1,
+      "sexo": "macho",
+      "especie": "gato",
+      "porte": "pequeno",
+      "temperamento": "brincalhao",
+      "vacinado": true,
+      "castrado": false,
+      "sociavel": true,
+      "endereco": "Rua Cruzilha, 1217"
+    },
+    {
+      "id": 2,
+      "nome": "Sakura",
+      "idade": 5,
+      "sexo": "femea",
+      "especie": "cachorro",
+      "porte": "medio",
+      "temperamento": "medroso",
+      "vacinado": true,
+      "castrado": false,
+      "sociavel": true,
+      "endereco": "Rua Des Vaz da Costa, 857"
+    },
+    {
+      "id": 3,
+      "nome": "Bolt",
+      "idade": 5,
+      "sexo": "macho",
+      "especie": "cachorro",
+      "porte": "medio",
+      "temperamento": "hiperativo",
+      "vacinado": true,
+      "castrado": false,
+      "sociavel": false,
+      "endereco": "Av Pedro Freitas, 1857"
+    },
+    {
+      "id": 4,
+      "nome": "Gus",
+      "idade": 5,
+      "sexo": "macho",
+      "especie": "coelho",
+      "porte": "medio",
+      "temperamento": "hiperativo",
+      "vacinado": true,
+      "castrado": false,
+      "sociavel": false,
+      "endereco": "Av Pedro Freitas, 1857"
+    }
+  ]
+  

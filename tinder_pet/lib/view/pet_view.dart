@@ -10,19 +10,26 @@ class PetsView extends StatefulWidget {
 
 class _PetsViewState extends State<PetsView> {
   final PetController controller = PetController();
-  List<Map<String, String>> pets = [];
-  List<Map<String, String>> filteredPets = [];
+  List<Map<String, dynamic>> pets = [];
+  List<Map<String, dynamic>> filteredPets = [];
 
   @override
   void initState() {
     super.initState();
-    pets = controller.fetchPets(); // Carrega a lista de pets
-    filteredPets = pets; // Inicialmente, todos os pets são exibidos
+    _loadPets();  // Carrega os pets quando a tela inicia
+  }
+
+  Future<void> _loadPets() async {
+    await controller.loadPetsFromFile();
+    setState(() {
+      pets = controller.fetchPets();  // Carrega a lista de pets
+      filteredPets = pets;            // Inicializa a lista de pets filtrados
+    });
   }
 
   void _onSearchChanged(String query) {
     setState(() {
-      filteredPets = controller.searchPets(query, pets); // Filtra os pets com base na busca
+      filteredPets = controller.searchPets(query);  // Atualiza a busca
     });
   }
 
@@ -37,11 +44,13 @@ class _PetsViewState extends State<PetsView> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: ListView(
           children: [
-            SearchBar(onSearchChanged: _onSearchChanged),
+            SearchBar(onSearchChanged: _onSearchChanged),  // Campo de busca
             const SizedBox(height: 20),
-            const CategorySection(),
+            const FindPetSection(),  // Seção "Encontre um pet"
             const SizedBox(height: 20),
-            PetGrid(pets: filteredPets),
+            CategorySection(categories: controller.speciesCategories),  // Seção de categorias de espécies
+            const SizedBox(height: 20),
+            PetGrid(pets: filteredPets),  // Grade de pets filtrados
           ],
         ),
       ),
@@ -71,22 +80,58 @@ class SearchBar extends StatelessWidget {
   }
 }
 
-class CategorySection extends StatelessWidget {
-  const CategorySection({super.key});
+class FindPetSection extends StatelessWidget {
+  const FindPetSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        CategoryItem(label: 'Cat', icon: Icons.pets),
-        CategoryItem(label: 'Dog', icon: Icons.pets),
-        CategoryItem(label: 'Rabbit', icon: Icons.pets),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.blue[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Encontre um pet perto de você',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              // Ação do botão
+            },
+            child: const Text('Procurar agora'),
+          ),
+        ],
+      ),
     );
   }
 }
 
+// Seção que exibe as categorias de espécies
+class CategorySection extends StatelessWidget {
+  final Set<String> categories;
+
+  const CategorySection({super.key, required this.categories});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: categories.map((category) {
+        return CategoryItem(label: category, icon: Icons.pets);
+      }).toList(),
+    );
+  }
+}
+
+// Item de categoria
 class CategoryItem extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -112,8 +157,9 @@ class CategoryItem extends StatelessWidget {
   }
 }
 
+// Grade que exibe os pets
 class PetGrid extends StatelessWidget {
-  final List<Map<String, String>> pets;
+  final List<Map<String, dynamic>> pets;
 
   const PetGrid({super.key, required this.pets});
 
@@ -131,25 +177,26 @@ class PetGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final pet = pets[index];
         return PetCard(
-          name: pet['name']!,
-          age: pet['age']!,
-          imageUrl: pet['imageUrl']!,
+          name: pet['nome'] ?? '',
+          age: pet['idade']?.toString() ?? '',
+          address: pet['endereco'] ?? 'Endereço desconhecido',
         );
       },
     );
   }
 }
 
+// Cartão que exibe as informações de um pet
 class PetCard extends StatelessWidget {
   final String name;
   final String age;
-  final String imageUrl;
+  final String address;
 
   const PetCard({
     super.key,
     required this.name,
     required this.age,
-    required this.imageUrl,
+    required this.address,
   });
 
   @override
@@ -162,17 +209,10 @@ class PetCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          /* ClipRect(
-            child: Image.asset(
-              imageUrl,
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
-            ),
-          ), */
           const SizedBox(height: 10),
           Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(age),
+          Text('$age anos'),
+          Text(address),
         ],
       ),
     );
