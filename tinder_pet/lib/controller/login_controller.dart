@@ -9,7 +9,7 @@ class LoginController {
 
     if (loginSuccess) {
       // Navigate to the desired route after successful login
-      Navigator.pushReplacementNamed(context, '/cadastropet'); // Replace '/home' with your actual route name
+      Navigator.pushReplacementNamed(context, '/pets'); // Replace '/home' with your actual route name
     } else {
       // Show an error message if login fails
       ScaffoldMessenger.of(context).showSnackBar(

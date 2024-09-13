@@ -10,7 +10,9 @@ class PetDetailView extends StatelessWidget {
   final String ownerImage = 'package:tinder_pet/assets/images/owner.jpg'; // Substitua pela imagem do dono
   final String ownerName = 'Marceline';
   final String ownerDescription = 'Are you looking for a new furry friend? Search resident pets near you and discover their adoption details.';
-  final String whatsappUrl = 'https://wa.me/551234567890'; // Substitua pelo número do WhatsApp do dono
+  final String whatsappUrl = 'https://wa.me/551234567890';
+
+  const PetDetailView({super.key}); // Substitua pelo número do WhatsApp do dono
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +20,7 @@ class PetDetailView extends StatelessWidget {
       appBar: AppBar(
         title: Text(petName),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -31,27 +33,27 @@ class PetDetailView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image.asset(petImage),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 address,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
-              SizedBox(height: 16),
-              Row(
+              const SizedBox(height: 16),
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // ... seus cards de sexo, idade e peso aqui
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  Container(
+                  SizedBox(
                     width: 200,
                     height: 200,
                     child: Image.asset('asssets/images/dog.png')
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -59,9 +61,9 @@ class PetDetailView extends StatelessWidget {
                       Text(ownerDescription),
                     ],
                   ),
-                  Spacer(),
+                  const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.chat),
+                    icon: const Icon(Icons.chat),
                     onPressed: () {
                       // Abrir o WhatsApp com o número do dono
                       // ...
@@ -69,12 +71,12 @@ class PetDetailView extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   // Lógica para iniciar o processo de adoção
                 },
-                child: Text('Adotar'),
+                child: const Text('Adotar'),
               ),
             ],
           ),

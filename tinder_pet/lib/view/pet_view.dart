@@ -1,56 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:tinder_pet/controller/pet_controller.dart';
 
-class PetsView extends StatelessWidget {
+class PetsView extends StatefulWidget {
   const PetsView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pet Adoption',
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-      ),
-      home: const PetAdoptionHomePage(),
-    );
-  }
+  _PetsViewState createState() => _PetsViewState();
 }
 
-class PetAdoptionHomePage extends StatelessWidget {
-  const PetAdoptionHomePage({super.key});
+class _PetsViewState extends State<PetsView> {
+  final PetController controller = PetController();
+  List<Map<String, String>> pets = [];
+  List<Map<String, String>> filteredPets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    pets = controller.fetchPets(); // Carrega a lista de pets
+    filteredPets = pets; // Inicialmente, todos os pets são exibidos
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      filteredPets = controller.searchPets(query, pets); // Filtra os pets com base na busca
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PET ADOPTION'),
+        title: const Text('Tinder Pet'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: const [
-          SearchBar(),
-          SizedBox(height: 20),
-          CategorySection(),
-          SizedBox(height: 20),
-          PetGrid(),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: ListView(
+          children: [
+            SearchBar(onSearchChanged: _onSearchChanged),
+            const SizedBox(height: 20),
+            const CategorySection(),
+            const SizedBox(height: 20),
+            PetGrid(pets: filteredPets),
+          ],
+        ),
       ),
     );
   }
 }
 
 class SearchBar extends StatelessWidget {
-  const SearchBar({super.key});
+  final Function(String) onSearchChanged;
+
+  const SearchBar({super.key, required this.onSearchChanged});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onChanged: onSearchChanged,
       decoration: InputDecoration(
         hintText: 'Search for pets',
         prefixIcon: const Icon(Icons.search),
@@ -65,7 +72,7 @@ class SearchBar extends StatelessWidget {
 }
 
 class CategorySection extends StatelessWidget {
-  const CategorySection({Key? key}) : super(key: key);
+  const CategorySection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -106,22 +113,29 @@ class CategoryItem extends StatelessWidget {
 }
 
 class PetGrid extends StatelessWidget {
-  const PetGrid({super.key});
+  final List<Map<String, String>> pets;
+
+  const PetGrid({super.key, required this.pets});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      children: const [
-        PetCard(name: 'Olivia', age: '2 years', imageUrl: 'assets/cat.png'),
-        PetCard(name: 'Pedro', age: '3 years', imageUrl: 'assets/dog.png'),
-        PetCard(name: 'Fluffy', age: '1 year', imageUrl: 'assets/rabbit.png'),
-        PetCard(name: 'Max', age: '4 years', imageUrl: 'assets/dog.png'),
-      ],
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: pets.length,
+      itemBuilder: (context, index) {
+        final pet = pets[index];
+        return PetCard(
+          name: pet['name']!,
+          age: pet['age']!,
+          imageUrl: pet['imageUrl']!,
+        );
+      },
     );
   }
 }
@@ -148,7 +162,14 @@ class PetCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(imageUrl, height: 80),
+          /* ClipRect(
+            child: Image.asset(
+              imageUrl,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
+          ), */
           const SizedBox(height: 10),
           Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(age),

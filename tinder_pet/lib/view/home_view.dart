@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class HomeView extends StatefulWidget {
+  const HomeView({super.key});
+
   @override
   _HomeViewState createState() => _HomeViewState();
 }
@@ -23,12 +25,12 @@ class _HomeViewState extends State<HomeView> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/login'),
-              child: Text('Tenho uma conta'),
+              child: const Text('Tenho uma conta'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _navigateToRegister,
-              child: Text('Criar uma conta'),
+              child: const Text('Criar uma conta'),
             ),
           ],
         ),
