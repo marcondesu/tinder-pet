@@ -24,12 +24,13 @@ class LoginController {
     } else if (user['senha'] != senha) {
       _showDialog(context, 'Erro', 'Senha incorreta.');
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                PetsView()), // Substitua PetsView pela sua tela de pets
-      );
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //       builder: (context) =>
+      //           PetsView()), // Substitua PetsView pela sua tela de pets
+      // );
+      Navigator.pushReplacementNamed(context, '/main');
     }
   }
 

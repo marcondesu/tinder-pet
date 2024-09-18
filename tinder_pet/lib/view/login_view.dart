@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tinder_pet/controller/login_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tinder_pet/controller/pet_controller.dart';
+import 'package:tinder_pet/view/main_view.dart';
 import 'package:tinder_pet/view/register_view.dart';
 
 class LoginView extends StatefulWidget {
@@ -10,9 +12,36 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final LoginController controller = LoginController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  Future<void> signIn() async {
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      if (response.user != null) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MainScreen(petController: PetController()),
+            ));
+      }
+    } on AuthException catch (e) {
+      // Exibe uma mensagem de erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      // Exibe uma mensagem genérica para outros tipos de erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ocorreu um erro. Tente novamente.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,28 +70,9 @@ class _LoginViewState extends State<LoginView> {
                 ),
               ),
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(top: 24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        // Captura e envia o email e a senha para o controller
-                        final email = emailController.text;
-                        final password = passwordController.text;
-                        controller.handleLogin(context, email, password);
-                      },
-                      child: const Text('Entrar'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // Logic for forgot password screen
-                      },
-                      child: const Text('Esqueci a senha'),
-                    ),
-                  ],
-                ),
+              ElevatedButton(
+                onPressed: signIn, // Chama a função de login
+                child: const Text('Entrar'),
               ),
               const SizedBox(height: 16),
               TextButton(
@@ -70,7 +80,7 @@ class _LoginViewState extends State<LoginView> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SignupView(), // Redireciona para a página de cadastro
+                      builder: (context) => const SignupView(),
                     ),
                   );
                 },
