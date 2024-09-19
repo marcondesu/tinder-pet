@@ -17,8 +17,7 @@
                  to determine the Window background behind the Flutter UI. -->
             <meta-data
               android:name="com.google.android.geo.API_KEY"
-              android:value="AIzaSyC7Xwb9MF_RAy5QFqw08u2_mGJda8vzTWo"
-              />
+              android:value="${{dotenv.env['GOOGLE_MAPS_ANDROID_API_KEY']}}"/>
 
             <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

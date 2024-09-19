@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
-import 'dart:math';
-import 'package:tinder_pet/controller/pet_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:diacritic/diacritic.dart';
+import 'package:tinder_pet/view/pet_view.dart'; // Import necessário para remover acentos
 
 class AddPetView extends StatefulWidget {
-  final PetController controller;
-
-  const AddPetView({super.key, required this.controller});
+  const AddPetView({super.key});
 
   @override
   _AddPetViewState createState() => _AddPetViewState();
@@ -20,7 +19,7 @@ class _AddPetViewState extends State<AddPetView> {
 
   String _selectedSpecies = '';
   String _selectedSex = 'Fêmea';
-  String _selectedSize = 'P';
+  String _selectedSize = 'Pequeno';
 
   Set<String> _selectedTemperaments = {};
   Uint8List? _imageBytes;
@@ -42,72 +41,64 @@ class _AddPetViewState extends State<AddPetView> {
     }
   }
 
-  // Função para definir a espécie selecionada
-  void _selectSpecies(String species) {
-    setState(() {
-      _selectedSpecies = species;
-    });
+  // Função para salvar os dados no Supabase
+// Função para remover acentos e converter para minúsculas
+  String _normalizeEnumValue(String value) {
+    return removeDiacritics(value.toLowerCase());
   }
 
-  // Função para selecionar o sexo
-  void _selectSex(String sex) {
-    setState(() {
-      _selectedSex = sex;
-    });
+Future<void> _savePetToSupabase() async {
+  // Verificar se todos os campos obrigatórios estão preenchidos
+  if (_nameController.text.isEmpty ||
+      _selectedSpecies.isEmpty ||
+      _imageBytes == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Por favor, preencha todos os campos!')),
+    );
+    return;
   }
 
-  // Função para salvar os dados do pet
-  Future<void> _savePet() async {
-    if (_nameController.text.isNotEmpty &&
-        _selectedSpecies.isNotEmpty &&
-        _imageBytes != null) {
-      // Cria o Map com os dados do pet
-      Map<String, dynamic> newPet = {
-        'id': Random().nextInt(1000),
-        'nome': _nameController.text,
-        'especie': _selectedSpecies,
-        'sexo': _selectedSex,
-        'idade': _ageController.text,
-        'porte': _selectedSize,
-        'temperamento': _selectedTemperaments.toList(),
-        'vacinado': _isVaccinated,
-        'castrado': _isCastrated,
-        'sociavel': _isSociable,
-        'foto': _imageBytes,
-        'endereco': _addressController.text,
-      };
+  // Transformar a lista de temperamentos em uma string
+  String temperamentosString =
+      _selectedTemperaments.map((t) => _normalizeEnumValue(t)).join(',');
 
-      await widget.controller.addPet(newPet);
+  // Mapa com os dados do pet, normalizando os valores dos enums
+  Map<String, dynamic> newPet = {
+    'nome': _nameController.text,
+    'especie': _normalizeEnumValue(_selectedSpecies),
+    'sexo': _normalizeEnumValue(_selectedSex),
+    'idade': int.tryParse(_ageController.text) ?? 0,
+    'porte': _normalizeEnumValue(_selectedSize),
+    'temperamento': temperamentosString,
+    'vacinado': _isVaccinated,
+    'castrado': _isCastrated,
+    'sociavel': _isSociable,
+    'localizacao': _addressController.text,
+    'status': 'disponivel',
+  };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pet cadastrado com sucesso!')),
-      );
+  // Inserir os dados no Supabase
+  final response = await Supabase.instance.client.from('pet').insert(newPet);
 
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, preencha todos os campos!')),
-      );
-    }
+  if (response == null) {
+    // Cadastro bem-sucedido
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Pet cadastrado com sucesso!')),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PetsView(),
+      ),
+    );
+  } else {
+    // Mostrar erro
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erro ao cadastrar o pet: ${response.error!.message}')),
+    );
   }
+}
 
-  // Função para alternar temperamentos
-  void _toggleTemperament(String temperament) {
-    setState(() {
-      if (_selectedTemperaments.contains(temperament)) {
-        _selectedTemperaments.remove(temperament);
-      } else {
-        _selectedTemperaments.add(temperament);
-      }
-    });
-  }
-
-  // Função para selecionar o porte
-  void _selectSize(String size) {
-    setState(() {
-      _selectedSize = size;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +160,7 @@ class _AddPetViewState extends State<AddPetView> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _speciesButton('Cachorro'),
-                _speciesButton('Coelho'),
+                // _speciesButton('Coelho'),
                 _speciesButton('Gato'),
               ],
             ),
@@ -187,9 +178,9 @@ class _AddPetViewState extends State<AddPetView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _sizeButton('P'),
-                _sizeButton('M'),
-                _sizeButton('G'),
+                _sizeButton('Pequeno'),
+                _sizeButton('Médio'),
+                _sizeButton('Grande'),
               ],
             ),
             const SizedBox(height: 20),
@@ -241,7 +232,7 @@ class _AddPetViewState extends State<AddPetView> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _savePet,
+              onPressed: _savePetToSupabase,
               child: const Text('Salvar Pet'),
             ),
           ],
@@ -275,22 +266,44 @@ class _AddPetViewState extends State<AddPetView> {
 
   // Botão para seleção de porte
   Widget _sizeButton(String size) {
-  return ElevatedButton(
-    onPressed: () => _selectSize(size),
-    style: ElevatedButton.styleFrom(
-      backgroundColor: _selectedSize == size ? Colors.blue : const Color.fromARGB(255, 221, 221, 221),
-    ),
-    child: Column(
-      children: [
-        Icon(
-          Icons.pets,
-          size: size == 'P' ? 30 : size == 'M' ? 40 : 50,
-        ),
-        const SizedBox(height: 5),
-        Text(size),
-      ],
-    ),
-  );
-}
+    return ElevatedButton(
+      onPressed: () => _selectSize(size),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _selectedSize == size ? Colors.blue : Colors.grey,
+      ),
+      child: Text(size),
+    );
+  }
 
+  // Função para alternar temperamentos
+  void _toggleTemperament(String temperament) {
+    setState(() {
+      if (_selectedTemperaments.contains(temperament)) {
+        _selectedTemperaments.remove(temperament);
+      } else {
+        _selectedTemperaments.add(temperament);
+      }
+    });
+  }
+
+  // Função para selecionar a espécie
+  void _selectSpecies(String species) {
+    setState(() {
+      _selectedSpecies = species;
+    });
+  }
+
+  // Função para selecionar o sexo
+  void _selectSex(String sex) {
+    setState(() {
+      _selectedSex = sex;
+    });
+  }
+
+  // Função para selecionar o porte
+  void _selectSize(String size) {
+    setState(() {
+      _selectedSize = size;
+    });
+  }
 }

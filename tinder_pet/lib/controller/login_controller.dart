@@ -1,7 +1,6 @@
 import 'dart:convert'; // Para manipular JSON
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:tinder_pet/view/pet_view.dart';
 
 class LoginController {
   // Função para carregar os usuários do arquivo JSON

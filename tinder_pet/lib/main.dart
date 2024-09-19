@@ -6,13 +6,15 @@ import 'package:tinder_pet/view/main_view.dart';
 import 'package:tinder_pet/view/pet_view.dart';
 import 'package:tinder_pet/view/register_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
    WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load();
   await Supabase.initialize(
-    url: 'https://agzmhzmfelypeykycwsb.supabase.co/',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnem1oem1mZWx5cGV5a3ljd3NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2ODY5OTAsImV4cCI6MjA0MjI2Mjk5MH0.7vgRhiRuX_iQKfTOzj1fRYZjgi5kSEoHKK13ftbKI0o',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
   runApp(MyApp());
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/register': (context) => const SignupView(),
         '/pets': (context) => const PetsView(),
-        '/add-pet': (context) => AddPetView(controller: petController),
+        '/add-pet': (context) => AddPetView(),
         '/main': (context) => MainScreen(petController: petController),
       },
     );

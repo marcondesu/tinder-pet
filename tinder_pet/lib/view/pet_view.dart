@@ -22,7 +22,7 @@ class _PetsViewState extends State<PetsView> {
   }
 
   Future<void> _loadPets() async {
-    await controller.loadPetsFromFile();
+    await controller.loadPetsFromSupabase(); // Carrega os pets do Supabase
     setState(() {
       pets = controller.fetchPets(); // Carrega a lista de pets
       filteredPets = pets; // Inicializa a lista de pets filtrados
@@ -41,6 +41,16 @@ class _PetsViewState extends State<PetsView> {
       appBar: AppBar(
         title: const Text('Tinder Pet'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon:
+                const Icon(Icons.add), // Ícone de adição para cadastrar um pet
+            onPressed: () {
+              // Navegar para a tela de cadastro de pet
+              Navigator.pushNamed(context, '/add-pet');
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -189,7 +199,7 @@ class PetGrid extends StatelessWidget {
         return PetCard(
           name: pet['nome'] ?? '',
           age: pet['idade']?.toString() ?? '',
-          address: pet['endereco'] ?? 'Endereço desconhecido',
+          address: pet['localizacao'] ?? 'Endereço desconhecido',
           pet: pet, // Passa o objeto completo para a página de detalhes
         );
       },

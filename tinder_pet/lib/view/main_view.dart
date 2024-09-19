@@ -24,7 +24,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pages.addAll([
       const PetsView(), // Home Page
-      AddPetView(controller: widget.petController ?? PetController()), // Add Pet Page
+      AddPetView(), // Add Pet Page
       const ProfileView(), // Profile Page
     ]);
   }

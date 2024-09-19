@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tinder_pet/controller/register_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tinder_pet/view/login_view.dart';
 
 class SignupView extends StatefulWidget {
@@ -10,11 +10,28 @@ class SignupView extends StatefulWidget {
 }
 
 class _SignupViewState extends State<SignupView> {
-  final SignupController controller = SignupController();
+  // final SignupController controller = SignupController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  //Sign Up User
+  Future<void> signUp() async {
+    try {
+      await Supabase.instance.client.auth.signUp(
+          password: passwordController.text.trim(),
+          email: emailController.text.trim(),
+          data: {'username': nameController.text.trim()});
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const LoginView()));
+    } on AuthException catch (e) {
+      debugPrint(e.message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,42 +75,22 @@ class _SignupViewState extends State<SignupView> {
                 ),
               ),
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(top: 24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        // Captura e envia os dados para o controller
-                        final name = nameController.text;
-                        final email = emailController.text;
-                        final password = passwordController.text;
-                        final confirmPassword = confirmPasswordController.text;
-
-                        controller.handleSignup(
-                          context,
-                          name,
-                          email,
-                          password,
-                          confirmPassword,
-                        );
-                      },
-                      child: const Text('Cadastrar'),
+              ElevatedButton(
+                onPressed: signUp, // Chama a função de login
+                child: const Text('Cadastrar'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          LoginView(), // Redireciona para a página de Login
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LoginView(), // Redireciona para a página de Login
-                          ),
-                        );
-                      },
-                      child: const Text('Já tenho conta'),
-                    ),
-                  ],
-                ),
+                  );
+                },
+                child: const Text('Já tenho conta'),
               ),
             ],
           ),
