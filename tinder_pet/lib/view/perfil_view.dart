@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tinder_pet/view/login_view.dart';
 
 class ProfileView extends StatelessWidget {
-  const ProfileView({Key? key}) : super(key: key);
+  const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +33,20 @@ class ProfileView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 50,
-                  backgroundImage: AssetImage('assets/profile_picture.png'), // Substitua por uma imagem de perfil real
+                  child: Icon(
+                    Icons.person, // Ícone de usuário
+                    size: 50, // Tamanho do ícone
+                  ),
+                  /* backgroundImage: AssetImage(
+                      'assets/profile_picture.png'), // Substitua por uma imagem de perfil real */
                 ),
                 const SizedBox(height: 20),
                 Text(
                   userData['nome'] ?? 'Nome do Usuário',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -56,7 +63,12 @@ class ProfileView extends StatelessWidget {
                   onPressed: () {
                     // Lógica de logout
                     Supabase.instance.client.auth.signOut();
-                    Navigator.pushReplacementNamed(context, '/login');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginView(),
+                      ),
+                    );
                   },
                   child: const Text('Logout'),
                 ),
@@ -69,23 +81,26 @@ class ProfileView extends StatelessWidget {
   }
 
   Future<Map<String, dynamic>?> _fetchUserData() async {
+    // Obter o usuário autenticado
     final user = Supabase.instance.client.auth.currentUser;
 
+    // Verifica se o usuário está autenticado
     if (user == null) {
       return null;
     }
 
-    final response = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('id', user.id)
-        .single();
+    // Converter os dados do usuário em um Map<String, dynamic>
+    final Map<String, dynamic> userData = {
+      'id': user.id,
+      'email': user.email,
+      'createdAt': user.createdAt.toString(),
+      'updatedAt': user.updatedAt?.toString(),
+      'appMetadata': user.appMetadata,
+      'userMetadata': user.userMetadata,
+      'lastSignInAt': user.lastSignInAt?.toString(),
+      'role': user.role,
+    };
 
-    // Verifica se a resposta contém dados
-    if (response != null) {
-      return response as Map<String, dynamic>;
-    } else {
-      return null;
-    }
+    return userData;
   }
 }
