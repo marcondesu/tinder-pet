@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tinder_pet/view/login_view.dart';
+import 'package:tinder_pet/view/pet_view.dart'; // Importa o PetGrid
+import 'package:tinder_pet/controller/profile_controller.dart'; // Importa o controller
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  _ProfileViewState createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  final ProfileController profileController = ProfileController();
+  List<Map<String, dynamic>> userPets = []; // Lista para armazenar os pets doados pelo usuário
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserPets(); // Chama a função para buscar os pets ao inicializar a tela
+  }
+
+  Future<void> _fetchUserPets() async {
+    // Busca os dados do usuário
+    final userData = await profileController.fetchUserData();
+    if (userData == null || userData['id'] == null) {
+      return; // Se não houver dados do usuário, interrompe a execução
+    }
+
+    // Busca os pets do usuário no Supabase
+    final response = await Supabase.instance.client
+        .from('pet')
+        .select()
+        .eq('doador', userData['id']); // Filtra os pets pelo campo 'doador
+
+    userPets = List<Map<String, dynamic>>.from(response as List);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +44,7 @@ class ProfileView extends StatelessWidget {
         title: const Text('Perfil'),
       ),
       body: FutureBuilder<Map<String, dynamic>?>(
-        future: _fetchUserData(),
+        future: profileController.fetchUserData(), // Chama o método do controller
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -39,8 +71,6 @@ class ProfileView extends StatelessWidget {
                     Icons.person, // Ícone de usuário
                     size: 50, // Tamanho do ícone
                   ),
-                  /* backgroundImage: AssetImage(
-                      'assets/profile_picture.png'), // Substitua por uma imagem de perfil real */
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -61,9 +91,8 @@ class ProfileView extends StatelessWidget {
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () {
-                    // Lógica de logout
-                    Supabase.instance.client.auth.signOut();
-                    Navigator.push(
+                    Supabase.instance.client.auth.signOut(); // Lógica de logout
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const LoginView(),
@@ -72,35 +101,13 @@ class ProfileView extends StatelessWidget {
                   },
                   child: const Text('Logout'),
                 ),
+                const SizedBox(height: 40),
+                PetGrid(pets: userPets), // Exibe o PetGrid com os pets
               ],
             ),
           );
         },
       ),
     );
-  }
-
-  Future<Map<String, dynamic>?> _fetchUserData() async {
-    // Obter o usuário autenticado
-    final user = Supabase.instance.client.auth.currentUser;
-
-    // Verifica se o usuário está autenticado
-    if (user == null) {
-      return null;
-    }
-
-    // Converter os dados do usuário em um Map<String, dynamic>
-    final Map<String, dynamic> userData = {
-      'id': user.id,
-      'email': user.email,
-      'createdAt': user.createdAt.toString(),
-      'updatedAt': user.updatedAt?.toString(),
-      'appMetadata': user.appMetadata,
-      'userMetadata': user.userMetadata,
-      'lastSignInAt': user.lastSignInAt?.toString(),
-      'role': user.role,
-    };
-
-    return userData;
   }
 }

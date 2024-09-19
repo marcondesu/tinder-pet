@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tinder_pet/view/login_view.dart';
 
@@ -14,8 +15,7 @@ class _SignupViewState extends State<SignupView> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
 
   //Sign Up User
   Future<void> signUp() async {
@@ -67,12 +67,18 @@ class _SignupViewState extends State<SignupView> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
+              IntlPhoneField(
                 decoration: const InputDecoration(
-                  labelText: 'Confirmar senha',
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(),
+                  ),
                 ),
+                initialCountryCode: 'BR',
+                showCountryFlag: false,
+                onChanged: (phone) {
+                  print(phone.completeNumber);
+                },
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -86,7 +92,7 @@ class _SignupViewState extends State<SignupView> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          LoginView(), // Redireciona para a página de Login
+                          const LoginView(), // Redireciona para a página de Login
                     ),
                   );
                 },
@@ -104,7 +110,7 @@ class _SignupViewState extends State<SignupView> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    confirmPasswordController.dispose();
+    phoneController.dispose();
     super.dispose();
   }
 }
