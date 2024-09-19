@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart'; // Para converter endereços em coordenadas
+import 'package:supabase_flutter/supabase_flutter.dart'; // Importa Supabase para buscar dados do banco
 
 class MapView extends StatefulWidget {
   const MapView({super.key});
@@ -20,6 +22,7 @@ class _MapViewState extends State<MapView> {
     _getCurrentLocation();
   }
 
+  // Obtém a localização atual do usuário
   Future<void> _getCurrentLocation() async {
     final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     setState(() {
@@ -31,22 +34,48 @@ class _MapViewState extends State<MapView> {
           infoWindow: const InfoWindow(title: 'Sua localização'),
         ),
       );
-      // Adicione outros pontos de animais
-      _addAnimalMarkers();
+      _fetchAnimalMarkers(); // Busca e adiciona os marcadores de animais
     });
   }
 
-  void _addAnimalMarkers() {
-    // Aqui você adiciona os pontos de animais na cidade
-    // Exemplo de ponto fixo
-    _markers.add(
-      Marker(
-        markerId: const MarkerId('animal1'),
-        position: LatLng(_currentPosition!.latitude + 0.01, _currentPosition!.longitude + 0.01),
-        infoWindow: const InfoWindow(title: 'Animal encontrado'),
-      ),
-    );
+  // Busca os endereços dos animais no banco de dados
+  Future<void> _fetchAnimalMarkers() async {
+  final response = await Supabase.instance.client
+      .from('pet')
+      .select('localizacao'); // Seleciona a coluna 'endereco' da tabela 'pets'
+
+  final pets = List<Map<String, dynamic>>.from(response as List);
+  for (var pet in pets) {
+    String logradouro = pet['localizacao']; // Obtém o logradouro de cada pet
+    print('Logradouro: $logradouro'); // Adiciona um print para depuração
+    await _addAnimalMarker(logradouro); // Adiciona o marcador no mapa
   }
+}
+
+Future<void> _addAnimalMarker(String logradouro) async {
+  try {
+    List<Location> locations = await locationFromAddress(logradouro); // Converte o endereço em coordenadas
+    print('Localizações: $locations'); // Adiciona um print para depuração
+
+    if (locations.isNotEmpty) {
+      Location location = locations.first;
+      setState(() {
+        _markers.add(
+          Marker(
+            markerId: MarkerId(logradouro),
+            position: LatLng(location.latitude, location.longitude),
+            infoWindow: InfoWindow(title: 'Animal encontrado', snippet: logradouro),
+          ),
+        );
+      });
+    } else {
+      print('Nenhuma localização encontrada para o endereço: $logradouro');
+    }
+  } catch (e) {
+    print('Erro ao converter o endereço: $e');
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +94,7 @@ class _MapViewState extends State<MapView> {
                 target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
                 zoom: 14.0,
               ),
-              markers: _markers,
+              markers: _markers, // Exibe os marcadores no mapa
             ),
     );
   }

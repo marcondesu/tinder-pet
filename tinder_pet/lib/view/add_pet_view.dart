@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart';
+// import 'dart:typed_data';
+// import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
-import 'package:tinder_pet/view/pet_view.dart'; // Import necessário para remover acentos
+import 'package:tinder_pet/view/main_view.dart';
 import 'package:tinder_pet/controller/profile_controller.dart';
 
 class AddPetView extends StatefulWidget {
@@ -25,7 +25,7 @@ class _AddPetViewState extends State<AddPetView> {
   String? _userId; // Armazena o ID do usuário autenticado
 
   Set<String> _selectedTemperaments = {};
-  Uint8List? _imageBytes;
+  // Uint8List? _imageBytes;
 
   bool _isVaccinated = false;
   bool _isCastrated = false;
@@ -45,17 +45,17 @@ class _AddPetViewState extends State<AddPetView> {
   }
 
   // Função para selecionar a imagem
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  // Future<void> _pickImage() async {
+  //   final picker = ImagePicker();
+  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      setState(() {
-        _imageBytes = bytes;
-      });
-    }
-  }
+  //   if (pickedFile != null) {
+  //     final bytes = await pickedFile.readAsBytes();
+  //     setState(() {
+  //       _imageBytes = bytes;
+  //     });
+  //   }
+  // }
 
   // Função para salvar os dados no Supabase
 // Função para remover acentos e converter para minúsculas
@@ -67,7 +67,7 @@ class _AddPetViewState extends State<AddPetView> {
     // Verificar se todos os campos obrigatórios estão preenchidos
     if (_nameController.text.isEmpty ||
         _selectedSpecies.isEmpty ||
-        _imageBytes == null ||
+        // _imageBytes == null ||
         _userId == null) {
       // Verifica se o userId foi carregado
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +107,7 @@ class _AddPetViewState extends State<AddPetView> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const PetsView(),
+          builder: (context) => const MainScreen(),
         ),
       );
     } else {
@@ -131,20 +131,20 @@ class _AddPetViewState extends State<AddPetView> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: _imageBytes == null
-                    ? const Center(
-                        child: Text('Clique para adicionar uma foto'))
-                    : Image.memory(_imageBytes!, fit: BoxFit.cover),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: _pickImage,
+            //   child: Container(
+            //     height: 150,
+            //     decoration: BoxDecoration(
+            //       border: Border.all(color: Colors.grey),
+            //       borderRadius: BorderRadius.circular(10),
+            //     ),
+            //     child: _imageBytes == null
+            //         ? const Center(
+            //             child: Text('Clique para adicionar uma foto'))
+            //         : Image.memory(_imageBytes!, fit: BoxFit.cover),
+            //   ),
+            // ),
             const SizedBox(height: 20),
             TextField(
               controller: _nameController,

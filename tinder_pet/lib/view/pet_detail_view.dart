@@ -25,7 +25,8 @@ class PetDetailView extends StatelessWidget {
             Text('Sexo: ${pet['sexo']}'),
             SizedBox(height: 10),
             Text('Temperamento: ${pet['temperamento']}'),
-            // Adicione mais detalhes conforme a estrutura do pet
+            SizedBox(height: 10),
+            Text('Status: ${pet['status']}'),
           ],
         ),
       ),
