@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:tinder_pet/view/pet_view.dart'; // Import necessário para remover acentos
+import 'package:tinder_pet/controller/profile_controller.dart';
 
 class AddPetView extends StatefulWidget {
   const AddPetView({super.key});
@@ -16,10 +17,12 @@ class _AddPetViewState extends State<AddPetView> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
+  final ProfileController _profileController = ProfileController();
 
   String _selectedSpecies = '';
   String _selectedSex = 'Fêmea';
   String _selectedSize = 'Pequeno';
+  String? _userId; // Armazena o ID do usuário autenticado
 
   Set<String> _selectedTemperaments = {};
   Uint8List? _imageBytes;
@@ -27,6 +30,19 @@ class _AddPetViewState extends State<AddPetView> {
   bool _isVaccinated = false;
   bool _isCastrated = false;
   bool _isSociable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData(); // Chama a função para obter os dados do usuário
+  }
+
+  Future<void> _fetchUserData() async {
+    final userData = await _profileController.fetchUserData();
+    setState(() {
+      _userId = userData?['id']; // Salva o userId no estado
+    });
+  }
 
   // Função para selecionar a imagem
   Future<void> _pickImage() async {
@@ -47,58 +63,62 @@ class _AddPetViewState extends State<AddPetView> {
     return removeDiacritics(value.toLowerCase());
   }
 
-Future<void> _savePetToSupabase() async {
-  // Verificar se todos os campos obrigatórios estão preenchidos
-  if (_nameController.text.isEmpty ||
-      _selectedSpecies.isEmpty ||
-      _imageBytes == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Por favor, preencha todos os campos!')),
-    );
-    return;
+  Future<void> _savePetToSupabase() async {
+    // Verificar se todos os campos obrigatórios estão preenchidos
+    if (_nameController.text.isEmpty ||
+        _selectedSpecies.isEmpty ||
+        _imageBytes == null ||
+        _userId == null) {
+      // Verifica se o userId foi carregado
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos!')),
+      );
+      return;
+    }
+
+    // Transformar a lista de temperamentos em uma string
+    String temperamentosString =
+        _selectedTemperaments.map((t) => _normalizeEnumValue(t)).join(',');
+
+    // Mapa com os dados do pet, incluindo o 'doador' (userId)
+    Map<String, dynamic> newPet = {
+      'nome': _nameController.text,
+      'especie': _normalizeEnumValue(_selectedSpecies),
+      'sexo': _normalizeEnumValue(_selectedSex),
+      'idade': int.tryParse(_ageController.text) ?? 0,
+      'porte': _normalizeEnumValue(_selectedSize),
+      'temperamento': temperamentosString,
+      'vacinado': _isVaccinated,
+      'castrado': _isCastrated,
+      'sociavel': _isSociable,
+      'localizacao': _addressController.text,
+      'status': 'disponivel',
+      'doador': _userId, // Inclui o campo doador com o userId
+    };
+
+    // Inserir os dados no Supabase
+    final response = await Supabase.instance.client.from('pet').insert(newPet);
+
+    if (response == null) {
+      // Cadastro bem-sucedido
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pet cadastrado com sucesso!')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PetsView(),
+        ),
+      );
+    } else {
+      // Mostrar erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Erro ao cadastrar o pet: ${response.error!.message}')),
+      );
+    }
   }
-
-  // Transformar a lista de temperamentos em uma string
-  String temperamentosString =
-      _selectedTemperaments.map((t) => _normalizeEnumValue(t)).join(',');
-
-  // Mapa com os dados do pet, normalizando os valores dos enums
-  Map<String, dynamic> newPet = {
-    'nome': _nameController.text,
-    'especie': _normalizeEnumValue(_selectedSpecies),
-    'sexo': _normalizeEnumValue(_selectedSex),
-    'idade': int.tryParse(_ageController.text) ?? 0,
-    'porte': _normalizeEnumValue(_selectedSize),
-    'temperamento': temperamentosString,
-    'vacinado': _isVaccinated,
-    'castrado': _isCastrated,
-    'sociavel': _isSociable,
-    'localizacao': _addressController.text,
-    'status': 'disponivel',
-  };
-
-  // Inserir os dados no Supabase
-  final response = await Supabase.instance.client.from('pet').insert(newPet);
-
-  if (response == null) {
-    // Cadastro bem-sucedido
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pet cadastrado com sucesso!')),
-    );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PetsView(),
-      ),
-    );
-  } else {
-    // Mostrar erro
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erro ao cadastrar o pet: ${response.error!.message}')),
-    );
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
