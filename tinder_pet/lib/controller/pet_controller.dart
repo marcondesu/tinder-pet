@@ -9,12 +9,6 @@ class PetController {
         .from('pet')
         .select();
 
-    // if (response.isEmpty) {
-    //   // Tratar erros, exibir uma mensagem para o usuário, etc.
-    //   print('Erro ao carregar pets: ${response}');
-    //   return;
-    // }
-
     _pets = List<Map<String, dynamic>>.from(response as List);
   }
 
@@ -34,7 +28,13 @@ class PetController {
   }
 
   Set<String> get speciesCategories {
-    // Exemplo de categorias, você pode buscar isso do banco também
-    return {'Cachorro', 'Gato', 'Outro'};
+    final Set<String> categories = {};
+    for (var pet in _pets) {
+      final species = pet['especie'] as String?;
+      if (species != null && species.isNotEmpty) {
+        categories.add(species.toLowerCase());
+      }
+    }
+    return categories;
   }
 }

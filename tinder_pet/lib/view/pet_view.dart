@@ -14,25 +14,53 @@ class _PetsViewState extends State<PetsView> {
   final PetController controller = PetController();
   List<Map<String, dynamic>> pets = [];
   List<Map<String, dynamic>> filteredPets = [];
+  String? selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    _loadPets(); // Carrega os pets quando a tela inicia
+    _loadPets();
   }
 
   Future<void> _loadPets() async {
-    await controller.loadPetsFromSupabase(); // Carrega os pets do Supabase
+    await controller.loadPetsFromSupabase();
     setState(() {
-      pets = controller.fetchPets(); // Carrega a lista de pets
-      filteredPets = pets; // Inicializa a lista de pets filtrados
+      pets = controller.fetchPets();
+      filteredPets = pets;
     });
   }
 
   void _onSearchChanged(String query) {
     setState(() {
-      filteredPets = controller.searchPets(query); // Atualiza a busca
+      filteredPets = controller.searchPets(query);
+      if (selectedCategory != null) {
+        filteredPets = filteredPets.where((pet) {
+          final species = pet['especie']?.toLowerCase() ?? '';
+          return species == selectedCategory!.toLowerCase();
+        }).toList();
+      }
     });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      selectedCategory = null;
+      filteredPets = pets;
+    });
+  }
+
+  void _onCategorySelected(String category) {
+    if (category == 'todos') {
+      _clearFilters();
+    } else {
+      setState(() {
+        selectedCategory = category;
+        filteredPets = pets.where((pet) {
+          final species = pet['especie']?.toLowerCase() ?? '';
+          return species == selectedCategory!.toLowerCase();
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -41,30 +69,30 @@ class _PetsViewState extends State<PetsView> {
       appBar: AppBar(
         title: const Text('Tinder Pet'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon:
-                const Icon(Icons.add), // Ícone de adição para cadastrar um pet
-            onPressed: () {
-              // Navegar para a tela de cadastro de pet
-              Navigator.pushNamed(context, '/add-pet');
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: ListView(
           children: [
-            SearchBar(onSearchChanged: _onSearchChanged), // Campo de busca
+            SearchBar(onSearchChanged: _onSearchChanged),
             const SizedBox(height: 20),
-            const FindPetSection(), // Seção "Encontre um pet"
+            const FindPetSection(),
             const SizedBox(height: 20),
+            const Text(
+              "Categorias",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            const SizedBox(height: 10),
             CategorySection(
-                categories: controller
-                    .speciesCategories), // Seção de categorias de espécies
+              categories: {'todos', ...controller.speciesCategories},
+              onCategorySelected: _onCategorySelected,
+            ),
             const SizedBox(height: 20),
-            PetGrid(pets: filteredPets), // Grade de pets filtrados
+            PetGrid(pets: filteredPets),
           ],
         ),
       ),
@@ -121,8 +149,7 @@ class FindPetSection extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const MapView(), // Navegar para a tela do mapa
+                  builder: (context) => const MapView(),
                 ),
               );
             },
@@ -134,50 +161,64 @@ class FindPetSection extends StatelessWidget {
   }
 }
 
-// Seção que exibe as categorias de espécies
 class CategorySection extends StatelessWidget {
   final Set<String> categories;
+  final Function(String) onCategorySelected;
 
-  const CategorySection({super.key, required this.categories});
+  const CategorySection({
+    super.key,
+    required this.categories,
+    required this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: categories.map((category) {
-        return CategoryItem(label: category, icon: Icons.pets);
+        return CategoryItem(
+          label: category,
+          icon: Icons.pets,
+          onTap: () => onCategorySelected(category),
+        );
       }).toList(),
     );
   }
 }
 
-// Item de categoria
 class CategoryItem extends StatelessWidget {
   final String label;
   final IconData icon;
+  final VoidCallback onTap;
 
   const CategoryItem({
     super.key,
     required this.label,
     required this.icon,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 30,
-          child: Icon(icon, size: 30),
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              child: Icon(icon, size: 30),
+            ),
+            const SizedBox(height: 8),
+            Text(label, textAlign: TextAlign.center),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(label),
-      ],
+      ),
     );
   }
 }
 
-// Grade que exibe os pets
 class PetGrid extends StatelessWidget {
   final List<Map<String, dynamic>> pets;
 
@@ -192,6 +233,7 @@ class PetGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
+        childAspectRatio: 3 / 2, // Ajuste de tamanho dos cards
       ),
       itemCount: pets.length,
       itemBuilder: (context, index) {
@@ -200,15 +242,13 @@ class PetGrid extends StatelessWidget {
           name: pet['nome'] ?? '',
           age: pet['idade']?.toString() ?? '',
           address: pet['localizacao'] ?? 'Endereço desconhecido',
-          pet: pet, // Passa o objeto completo para a página de detalhes
+          pet: pet,
         );
       },
     );
   }
 }
 
-// Cartão que exibe as informações de um pet
-// Cartão que exibe as informações de um pet
 class PetCard extends StatelessWidget {
   final String name;
   final String age;
@@ -230,24 +270,35 @@ class PetCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PetDetailView(
-                pet: pet), // Redireciona para a página de detalhes
+            builder: (context) => PetDetailView(pet: pet),
           ),
         );
       },
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 10),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('$age anos'),
-            Text(address),
-          ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text('$age anos', style: const TextStyle(fontSize: 14)),
+                const SizedBox(height: 4),
+                Text(address, style: const TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
         ),
       ),
     );
