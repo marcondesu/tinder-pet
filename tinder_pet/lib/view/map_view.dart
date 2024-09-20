@@ -20,6 +20,7 @@ class _MapViewState extends State<MapView> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _addManualMarkers(); // Adiciona marcadores manuais
   }
 
   // Obtém a localização atual do usuário
@@ -34,48 +35,73 @@ class _MapViewState extends State<MapView> {
           infoWindow: const InfoWindow(title: 'Sua localização'),
         ),
       );
-      _fetchAnimalMarkers(); // Busca e adiciona os marcadores de animais
+    });
+  }
+
+  // Adiciona marcadores manuais em locais específicos
+  void _addManualMarkers() {
+    final List<LatLng> locations = [
+      const LatLng(-5.066945696570198, -42.75402667100506), // Rua Cruzilha 1217
+      const LatLng(-5.067034318407777, -42.754089112820346), // Rua Cruzilha 1209
+      const LatLng(-5.038671083714811, -42.83355875915915), // Rua Des Vaz da Costa 863
+      const LatLng(-5.042541777000579, -42.747617162875684), // Av Zequinha Freire
+    ];
+
+    setState(() {
+      for (var i = 0; i < locations.length; i++) {
+        _markers.add(
+          Marker(
+            markerId: MarkerId('manual_marker_$i'),
+            position: locations[i],
+            infoWindow: InfoWindow(title: 'Local $i'),
+          ),
+        );
+      }
     });
   }
 
   // Busca os endereços dos animais no banco de dados
   Future<void> _fetchAnimalMarkers() async {
-  final response = await Supabase.instance.client
-      .from('pet')
-      .select('localizacao'); // Seleciona a coluna 'endereco' da tabela 'pets'
+    final response = await Supabase.instance.client
+        .from('pet')
+        .select('localizacao');
 
-  final pets = List<Map<String, dynamic>>.from(response as List);
-  for (var pet in pets) {
-    String logradouro = pet['localizacao']; // Obtém o logradouro de cada pet
-    print('Logradouro: $logradouro'); // Adiciona um print para depuração
-    await _addAnimalMarker(logradouro); // Adiciona o marcador no mapa
-  }
-}
-
-Future<void> _addAnimalMarker(String logradouro) async {
-  try {
-    List<Location> locations = await locationFromAddress(logradouro); // Converte o endereço em coordenadas
-    print('Localizações: $locations'); // Adiciona um print para depuração
-
-    if (locations.isNotEmpty) {
-      Location location = locations.first;
-      setState(() {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(logradouro),
-            position: LatLng(location.latitude, location.longitude),
-            infoWindow: InfoWindow(title: 'Animal encontrado', snippet: logradouro),
-          ),
-        );
-      });
-    } else {
-      print('Nenhuma localização encontrada para o endereço: $logradouro');
+    if (response != null) {
+      print('Erro na consulta ao Supabase: ${response}');
+      return;
     }
-  } catch (e) {
-    print('Erro ao converter o endereço: $e');
-  }
-}
 
+    final pets = List<Map<String, dynamic>>.from(response as List);
+    for (var pet in pets) {
+      String logradouro = pet['localizacao'];
+      print('Logradouro: $logradouro'); // Adiciona um print para depuração
+      await _addAnimalMarker(logradouro); // Adiciona o marcador no mapa
+    }
+  }
+
+  Future<void> _addAnimalMarker(String logradouro) async {
+    try {
+      List<Location> locations = await locationFromAddress(logradouro); // Converte o endereço em coordenadas
+      print('Localizações: $locations'); // Adiciona um print para depuração
+
+      if (locations.isNotEmpty) {
+        Location location = locations.first;
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(logradouro),
+              position: LatLng(location.latitude, location.longitude),
+              infoWindow: InfoWindow(title: 'Animal encontrado', snippet: logradouro),
+            ),
+          );
+        });
+      } else {
+        print('Nenhuma localização encontrada para o endereço: $logradouro');
+      }
+    } catch (e) {
+      print('Erro ao converter o endereço: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
