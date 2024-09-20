@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'dart:typed_data';
-// import 'package:image_picker/image_picker.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart'; // Importa o geolocator para obter a localização
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:tinder_pet/view/main_view.dart';
@@ -15,17 +15,16 @@ class AddPetView extends StatefulWidget {
 
 class _AddPetViewState extends State<AddPetView> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final ProfileController _profileController = ProfileController();
 
   String _selectedSpecies = '';
   String _selectedSex = 'Fêmea';
   String _selectedSize = 'Pequeno';
-  String? _userId; // Armazena o ID do usuário autenticado
+  String? _userId;
+  String? _currentLocationAddress; // Armazena a localização atual do usuário
 
   Set<String> _selectedTemperaments = {};
-  // Uint8List? _imageBytes;
 
   bool _isVaccinated = false;
   bool _isCastrated = false;
@@ -35,43 +34,50 @@ class _AddPetViewState extends State<AddPetView> {
   void initState() {
     super.initState();
     _fetchUserData(); // Chama a função para obter os dados do usuário
+    _getCurrentLocation(); // Chama a função para obter a localização atual
   }
 
+  // Obtém os dados do usuário logado
   Future<void> _fetchUserData() async {
     final userData = await _profileController.fetchUserData();
     setState(() {
-      _userId = userData?['id']; // Salva o userId no estado
+      _userId = userData?['id'];
     });
   }
 
-  // Função para selecionar a imagem
-  // Future<void> _pickImage() async {
-  //   final picker = ImagePicker();
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  // Obtém a localização atual do usuário e converte para um endereço legível
+  Future<void> _getCurrentLocation() async {
+    try {
+      // Obtém a posição atual com o geolocator
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
 
-  //   if (pickedFile != null) {
-  //     final bytes = await pickedFile.readAsBytes();
-  //     setState(() {
-  //       _imageBytes = bytes;
-  //     });
-  //   }
-  // }
+      // Converte as coordenadas em um endereço legível
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
 
-  // Função para salvar os dados no Supabase
-// Função para remover acentos e converter para minúsculas
-  String _normalizeEnumValue(String value) {
-    return removeDiacritics(value.toLowerCase());
+      Placemark place = placemarks[0]; // Pega o primeiro resultado da lista
+      setState(() {
+        _currentLocationAddress =
+            "${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+      });
+    } catch (e) {
+      print('Erro ao obter a localização: $e');
+    }
   }
 
+  // Função para salvar os dados no Supabase
+  // Função para salvar os dados no Supabase
   Future<void> _savePetToSupabase() async {
-    // Verificar se todos os campos obrigatórios estão preenchidos
     if (_nameController.text.isEmpty ||
         _selectedSpecies.isEmpty ||
-        // _imageBytes == null ||
-        _userId == null) {
-      // Verifica se o userId foi carregado
+        _userId == null ||
+        _currentLocationAddress == null) {
+      // Verifica se a localização foi carregada
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, preencha todos os campos!')),
+        const SnackBar(
+            content: Text(
+                'Por favor, preencha todos os campos e aguarde a localização!')),
       );
       return;
     }
@@ -80,7 +86,6 @@ class _AddPetViewState extends State<AddPetView> {
     String temperamentosString =
         _selectedTemperaments.map((t) => _normalizeEnumValue(t)).join(',');
 
-    // Mapa com os dados do pet, incluindo o 'doador' (userId)
     Map<String, dynamic> newPet = {
       'nome': _nameController.text,
       'especie': _normalizeEnumValue(_selectedSpecies),
@@ -91,16 +96,14 @@ class _AddPetViewState extends State<AddPetView> {
       'vacinado': _isVaccinated,
       'castrado': _isCastrated,
       'sociavel': _isSociable,
-      'localizacao': _addressController.text,
+      'localizacao': _currentLocationAddress, // Atribui o endereço legível
       'status': 'disponivel',
-      'doador': _userId, // Inclui o campo doador com o userId
+      'doador': _userId,
     };
 
-    // Inserir os dados no Supabase
     final response = await Supabase.instance.client.from('pet').insert(newPet);
 
     if (response == null) {
-      // Cadastro bem-sucedido
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pet cadastrado com sucesso!')),
       );
@@ -111,7 +114,6 @@ class _AddPetViewState extends State<AddPetView> {
         ),
       );
     } else {
-      // Mostrar erro
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content:
@@ -131,33 +133,10 @@ class _AddPetViewState extends State<AddPetView> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            // GestureDetector(
-            //   onTap: _pickImage,
-            //   child: Container(
-            //     height: 150,
-            //     decoration: BoxDecoration(
-            //       border: Border.all(color: Colors.grey),
-            //       borderRadius: BorderRadius.circular(10),
-            //     ),
-            //     child: _imageBytes == null
-            //         ? const Center(
-            //             child: Text('Clique para adicionar uma foto'))
-            //         : Image.memory(_imageBytes!, fit: BoxFit.cover),
-            //   ),
-            // ),
-            const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Nome do Pet',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Endereço',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -175,12 +154,10 @@ class _AddPetViewState extends State<AddPetView> {
               'Espécie do Pet:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _speciesButton('Cachorro'),
-                // _speciesButton('Coelho'),
                 _speciesButton('Gato'),
               ],
             ),
@@ -261,7 +238,6 @@ class _AddPetViewState extends State<AddPetView> {
     );
   }
 
-  // Botão para seleção de espécie
   Widget _speciesButton(String species) {
     return ElevatedButton(
       onPressed: () => _selectSpecies(species),
@@ -273,7 +249,6 @@ class _AddPetViewState extends State<AddPetView> {
     );
   }
 
-  // Botão para seleção de sexo
   Widget _genderButton(String sex) {
     return ElevatedButton(
       onPressed: () => _selectSex(sex),
@@ -284,7 +259,6 @@ class _AddPetViewState extends State<AddPetView> {
     );
   }
 
-  // Botão para seleção de porte
   Widget _sizeButton(String size) {
     return ElevatedButton(
       onPressed: () => _selectSize(size),
@@ -295,7 +269,6 @@ class _AddPetViewState extends State<AddPetView> {
     );
   }
 
-  // Função para alternar temperamentos
   void _toggleTemperament(String temperament) {
     setState(() {
       if (_selectedTemperaments.contains(temperament)) {
@@ -306,24 +279,25 @@ class _AddPetViewState extends State<AddPetView> {
     });
   }
 
-  // Função para selecionar a espécie
   void _selectSpecies(String species) {
     setState(() {
       _selectedSpecies = species;
     });
   }
 
-  // Função para selecionar o sexo
   void _selectSex(String sex) {
     setState(() {
       _selectedSex = sex;
     });
   }
 
-  // Função para selecionar o porte
   void _selectSize(String size) {
     setState(() {
       _selectedSize = size;
     });
+  }
+
+  String _normalizeEnumValue(String value) {
+    return removeDiacritics(value.toLowerCase());
   }
 }

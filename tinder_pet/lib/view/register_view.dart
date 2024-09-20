@@ -11,7 +11,6 @@ class SignupView extends StatefulWidget {
 }
 
 class _SignupViewState extends State<SignupView> {
-  // final SignupController controller = SignupController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -20,14 +19,41 @@ class _SignupViewState extends State<SignupView> {
   //Sign Up User
   Future<void> signUp() async {
     try {
-      await Supabase.instance.client.auth.signUp(
-          password: passwordController.text.trim(),
-          email: emailController.text.trim(),
-          data: {'username': nameController.text.trim()});
-      if (!mounted) return;
+      // Cadastro do usuário com Supabase Auth
+      final response = await Supabase.instance.client.auth.signUp(
+        password: passwordController.text.trim(),
+        email: emailController.text.trim(),
+        data: {'username': nameController.text.trim()},
+      );
 
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const LoginView()));
+      // Verifica se o cadastro foi bem-sucedido
+      if (response.user != null) {
+        // Obtém o ID do usuário criado
+        final userId = response.user!.id;
+
+        // Insere o usuário na tabela 'usuario' com os dados adicionais
+        final insertResponse = await Supabase.instance.client
+            .from('usuario')
+            .insert({
+          'id': userId,
+          'nome': nameController.text.trim(),
+          'email': emailController.text.trim(),
+          'telefone': phoneController.text.trim(),
+        });
+
+        if (insertResponse != null) {
+          debugPrint('Erro ao inserir na tabela usuario: ${insertResponse}');
+        }
+
+        // Redireciona para a tela de login após o cadastro
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginView()),
+        );
+      } else {
+        debugPrint('Erro ao cadastrar usuário: ${response}');
+      }
     } on AuthException catch (e) {
       debugPrint(e.message);
     }
@@ -68,6 +94,7 @@ class _SignupViewState extends State<SignupView> {
               ),
               const SizedBox(height: 16),
               IntlPhoneField(
+                controller: phoneController,
                 decoration: const InputDecoration(
                   labelText: 'Phone Number',
                   border: OutlineInputBorder(
@@ -76,13 +103,10 @@ class _SignupViewState extends State<SignupView> {
                 ),
                 initialCountryCode: 'BR',
                 showCountryFlag: false,
-                onChanged: (phone) {
-                  print(phone.completeNumber);
-                },
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: signUp, // Chama a função de login
+                onPressed: signUp, // Chama a função de cadastro
                 child: const Text('Cadastrar'),
               ),
               const SizedBox(height: 16),
@@ -91,8 +115,7 @@ class _SignupViewState extends State<SignupView> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const LoginView(), // Redireciona para a página de Login
+                      builder: (context) => const LoginView(),
                     ),
                   );
                 },
