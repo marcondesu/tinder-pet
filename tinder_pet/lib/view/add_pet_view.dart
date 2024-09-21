@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart'; // Importa o geolocator para obter a localização
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
@@ -51,22 +50,18 @@ class _AddPetViewState extends State<AddPetView> {
       // Obtém a posição atual com o geolocator
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
+      // print('position');
+      // print(position);
 
-      // Converte as coordenadas em um endereço legível
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(position.latitude, position.longitude);
-
-      Placemark place = placemarks[0]; // Pega o primeiro resultado da lista
       setState(() {
-        _currentLocationAddress =
-            "${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+        _currentLocationAddress = '${position.latitude}, ${position.longitude}';
+            // "${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
       });
     } catch (e) {
       print('Erro ao obter a localização: $e');
     }
   }
 
-  // Função para salvar os dados no Supabase
   // Função para salvar os dados no Supabase
   Future<void> _savePetToSupabase() async {
     if (_nameController.text.isEmpty ||
