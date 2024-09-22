@@ -110,7 +110,7 @@ class SearchBar extends StatelessWidget {
     return TextField(
       onChanged: onSearchChanged,
       decoration: InputDecoration(
-        hintText: 'Search for pets',
+        hintText: 'Pesquise um pet',
         prefixIcon: const Icon(Icons.search),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
@@ -241,7 +241,7 @@ class PetGrid extends StatelessWidget {
         return PetCard(
           name: pet['nome'] ?? '',
           age: pet['idade']?.toString() ?? '',
-          address: pet['localizacao'] ?? 'Endereço desconhecido',
+          // address: pet['localizacao'] ?? 'Endereço desconhecido',
           pet: pet,
         );
       },
@@ -252,19 +252,22 @@ class PetGrid extends StatelessWidget {
 class PetCard extends StatelessWidget {
   final String name;
   final String age;
-  final String address;
+  // final String address;
   final Map<String, dynamic> pet;
 
   const PetCard({
     super.key,
     required this.name,
     required this.age,
-    required this.address,
+    // required this.address,
     required this.pet,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Supondo que o campo de URL da imagem seja 'imagem_url'
+    final String? imageUrl = pet['imagem_url'];
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -281,22 +284,52 @@ class PetCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text('$age anos', style: const TextStyle(fontSize: 14)),
-                const SizedBox(height: 4),
-                Text(address, style: const TextStyle(fontSize: 14)),
-              ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              image: imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover, // Preenche todo o card
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.3), // Para escurecer a imagem
+                        BlendMode.darken,
+                      ),
+                    )
+                  : null, // Se não houver imagem, não aplica background
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white, // Para ficar visível sobre a imagem
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$age anos',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white, // Cor branca para melhor contraste
+                    ),
+                  ),
+                  // const SizedBox(height: 4),
+                  // Text(
+                  //   address,
+                  //   style: const TextStyle(
+                  //     fontSize: 14,
+                  //     color: Colors.white, // Cor branca para o endereço
+                  //   ),
+                  // ),
+                ],
+              ),
             ),
           ),
         ),

@@ -114,7 +114,7 @@ class _AddPetViewState extends State<AddPetView> {
             .getPublicUrl(filePath);
 
           print(publicUrl);
-          
+
         return publicUrl;
       } else {
         // Se houver erro no upload

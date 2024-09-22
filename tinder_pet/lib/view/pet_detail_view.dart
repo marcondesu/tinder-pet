@@ -60,26 +60,9 @@ class _PetDetailViewState extends State<PetDetailView> {
     }
   }
 
-  // String fixImageUrl(String? imageUrl) {
-  //   // Verifica se a URL não é nula e se contém o padrão com barras duplicadas
-  //   if (imageUrl != null &&
-  //       imageUrl.contains('https://agzmhzmfelypeykycwsb.supabase.co//')) {
-  //     // Substitui as barras duplicadas pelo caminho correto
-  //     return imageUrl.replaceFirst('https://agzmhzmfelypeykycwsb.supabase.co//',
-  //         'https://agzmhzmfelypeykycwsb.supabase.co/');
-  //   }
-
-  //   // Retorna a URL original se não houver problema
-  //   return imageUrl ?? '';
-  // }
-
   @override
   Widget build(BuildContext context) {
-    final String? imageUrl = widget.pet['imagem_url']; // URL da imagem do pet
-    // final String fixedImageUrl = fixImageUrl(imageUrl); // Corrige a URL se necessário
-
-    // print(imageUrl);
-    // print(fixedImageUrl);
+    final String imageUrl = widget.pet['imagem_url']; // URL da imagem do pet
 
     return Scaffold(
       appBar: AppBar(
@@ -101,23 +84,6 @@ class _PetDetailViewState extends State<PetDetailView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Exibir imagem do pet se disponível
-                    if (imageUrl != null && imageUrl.isNotEmpty)
-                      Center(
-                        child: Image.network(
-                          imageUrl,
-                          height: 200,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    else
-                      const Center(
-                        child: Text(
-                          'Sem foto cadastrada',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
                     // Nome do pet com ícone de gênero
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -139,6 +105,14 @@ class _PetDetailViewState extends State<PetDetailView> {
                           size: 28,
                         ),
                       ],
+                    ),
+                    // Exibir imagem do pet
+                    Center(
+                      child: Image.network(
+                        imageUrl,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     // Idade
