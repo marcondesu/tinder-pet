@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:tinder_pet/view/main_view.dart';
 import 'package:tinder_pet/controller/profile_controller.dart';
+import 'dart:typed_data';
+// import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart'; // Pacote compatível com Web
 
 class AddPetView extends StatefulWidget {
   const AddPetView({super.key});
@@ -25,6 +28,8 @@ class _AddPetViewState extends State<AddPetView> {
 
   Set<String> _selectedTemperaments = {};
 
+  Uint8List? _imageBytes;
+
   bool _isVaccinated = false;
   bool _isCastrated = false;
   bool _isSociable = false;
@@ -44,6 +49,31 @@ class _AddPetViewState extends State<AddPetView> {
     });
   }
 
+  // Função para selecionar a imagem
+  // Future<void> _pickImage() async {
+  //   final picker = ImagePicker();
+  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  //   if (pickedFile != null) {
+  //     final bytes = await pickedFile.readAsBytes();
+  //     setState(() {
+  //       _imageBytes = bytes;
+  //     });
+  //   }
+  // }
+  Future<void> _pickImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image, // Permitir apenas arquivos de imagem
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _imageBytes = result.files.single.bytes;
+      });
+    }
+  }
+
   // Obtém a localização atual do usuário e converte para um endereço legível
   Future<void> _getCurrentLocation() async {
     try {
@@ -55,10 +85,45 @@ class _AddPetViewState extends State<AddPetView> {
 
       setState(() {
         _currentLocationAddress = '${position.latitude}, ${position.longitude}';
-            // "${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+        // "${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
       });
     } catch (e) {
       print('Erro ao obter a localização: $e');
+    }
+  }
+
+  // Função para fazer upload da imagem para o Supabase
+  Future<String?> _uploadImage(Uint8List imageBytes) async {
+    try {
+      // Gerar um nome único para a imagem, com base no timestamp atual
+      final fileName = 'pet-${DateTime.now().millisecondsSinceEpoch}.png';
+      final filePath = 'pet-images/$fileName'; // Define o caminho no bucket
+
+      // Fazer o upload da imagem para o bucket "pet-images"
+      final response = await Supabase.instance.client.storage
+          .from('pet-images')
+          .uploadBinary(filePath, imageBytes,
+              fileOptions: const FileOptions(upsert: false));
+
+      // print(response);
+
+      if (response != null) {
+        // Se o upload for bem-sucedido, retorna a URL pública da imagem
+        final publicUrl = Supabase.instance.client.storage
+            .from('pet-images')
+            .getPublicUrl(filePath);
+
+          print(publicUrl);
+          
+        return publicUrl;
+      } else {
+        // Se houver erro no upload
+        // print('Erro ao fazer upload da imagem: ${response}');
+        return null;
+      }
+    } catch (e) {
+      // print('Erro durante o upload da imagem: $e');
+      return null;
     }
   }
 
@@ -67,12 +132,25 @@ class _AddPetViewState extends State<AddPetView> {
     if (_nameController.text.isEmpty ||
         _selectedSpecies.isEmpty ||
         _userId == null ||
-        _currentLocationAddress == null) {
-      // Verifica se a localização foi carregada
+        _currentLocationAddress == null ||
+        _imageBytes == null) {
+      // Verifica se uma imagem foi selecionada
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
-                'Por favor, preencha todos os campos e aguarde a localização!')),
+                'Por favor, preencha todos os campos e selecione uma imagem!')),
+      );
+      return;
+    }
+
+    // Fazer upload da imagem antes de salvar o pet
+    String? imageUrl = await _uploadImage(_imageBytes!);
+    // print("imagem: ${imageUrl}");
+
+    if (imageUrl == null) {
+      // Se houver erro no upload da imagem, mostrar uma mensagem
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao fazer upload da imagem!')),
       );
       return;
     }
@@ -91,7 +169,8 @@ class _AddPetViewState extends State<AddPetView> {
       'vacinado': _isVaccinated,
       'castrado': _isCastrated,
       'sociavel': _isSociable,
-      'localizacao': _currentLocationAddress, // Atribui o endereço legível
+      'localizacao': _currentLocationAddress,
+      'imagem_url': imageUrl, // Adiciona a URL da imagem
       'status': 'disponivel',
       'doador': _userId,
     };
@@ -110,9 +189,7 @@ class _AddPetViewState extends State<AddPetView> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Erro ao cadastrar o pet: ${response.error!.message}')),
+        SnackBar(content: Text('Erro ao cadastrar o pet: ${response}')),
       );
     }
   }
@@ -128,6 +205,21 @@ class _AddPetViewState extends State<AddPetView> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _imageBytes == null
+                    ? const Center(
+                        child: Text('Clique para adicionar uma foto'))
+                    : Image.memory(_imageBytes!, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
